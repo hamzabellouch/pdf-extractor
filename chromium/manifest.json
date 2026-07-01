@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "PDF Extractor",
+  "version": "1.0.0",
+  "description": "Export document previews from Google Drive as PDF, ZIP, or PNG images.",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "assets/content.js"
+      ],
+      "matches": [
+        "https://drive.google.com/file/d/*/view*",
+        "https://drive.google.com/file/d/*/edit*",
+        "https://drive.google.com/drive/*"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icon_16x16.png",
+    "32": "icon_32x32.png",
+    "48": "icon_48x48.png",
+    "128": "icon_128x128.png"
+  },
+  "permissions": []
+}
