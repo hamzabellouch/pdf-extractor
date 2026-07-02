@@ -1,4 +1,4 @@
-# PDF Extractor
+# PDF Extractor Beta
 
 A modern, lightweight, and powerful browser extension to extract and export document previews from Google Drive into various formats including PDF, images (PNG, JPG, WebP, AVIF), or compressed ZIP files.
 
