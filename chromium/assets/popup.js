@@ -307,19 +307,737 @@ const translations = {
 
 function U3(){
 const [langVal, setLangVal] = xt.useState(() => { try { return localStorage.getItem("gdrive_pdf_lang") || "en"; } catch(e) { return "en"; } });
-const [themeVal, setThemeVal] = xt.useState(() => { try { return localStorage.getItem("gdrive_pdf_theme") || "auto"; } catch(e) { return "auto"; } });
+const [themeVal, setThemeVal] = xt.useState(() => { try { return localStorage.getItem("gdrive_pdf_theme") || "light"; } catch(e) { return "light"; } });
 const [scrollSpeedVal, setScrollSpeedVal] = xt.useState(() => { try { return Number(localStorage.getItem("gdrive_pdf_scrollspeed")) || 300; } catch(err) { return 300; } });
 const [startPageVal, setStartPageVal] = xt.useState("");
 const [endPageVal, setEndPageVal] = xt.useState("");
+const [fileNameVal, setFileNameVal] = xt.useState("");
 const [zipOpen, setZipOpen] = xt.useState(!1);
 const [zipFormat, setZipFormat] = xt.useState(() => { try { return localStorage.getItem("gdrive_pdf_zipformat") || "png"; } catch(e) { return "png"; } });
-const [systemPrefersDark, setSystemPrefersDark] = xt.useState(() => { try { return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches; } catch(e) { return false; } });
-xt.useEffect(() => {
-  if (themeVal === "auto" && window.matchMedia) {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const listener = (e) => setSystemPrefersDark(e.matches);
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
+
+const isDark = themeVal === "dark";
+
+const toggleTheme = () => {
+  const nextTheme = isDark ? "light" : "dark";
+  setThemeVal(nextTheme);
+  try {
+    localStorage.setItem("gdrive_pdf_theme", nextTheme);
+  } catch (err) {}
+};
+
+const e=xt.useRef(null),t=xt.useRef(null),r=xt.useRef(null),n=xt.useRef(null),i=xt.useRef(null),[o,a]=xt.useState(!1),[s,u]=xt.useState(!1),[l,f]=xt.useState(M3),[d,h]=xt.useState(!1),[c,g]=xt.useState(!1),v=Object.fromEntries([["Original Size",[0,0]],...Object.entries(z3).flatMap(([k,S])=>{const F=S,C=[...S].reverse();return[[`${k} Portrait`,F],[`${k} Landscape`,C]]})]);
+xt.useEffect(()=>{
+  if (typeof chrome > "u" || !chrome.tabs) {
+    setFileNameVal("document");
+    if (e.current) e.current.value = "document";
+    u(!0);
+  } else {
+    chrome.tabs.query({active: !0, currentWindow: !0}, k => {
+      if (!k[0] || !k[0].id) return;
+      chrome.tabs.sendMessage(k[0].id, {action: "findOriginalFileName"}, S => {
+        if (chrome.runtime.lastError) {
+          console.warn("Could not communicate with content script. Active tab might not be Google Drive preview:", chrome.runtime.lastError.message);
+          return;
+        }
+        if (S) {
+          const {fileName: F, size: C} = S;
+          if (F && F !== "") {
+            if (C && C.width > C.height) f("A4 Landscape");
+            setFileNameVal(F);
+            if (e.current) e.current.value = F;
+            u(!0);
+          }
+        }
+      });
+    });
   }
-}, [themeVal]);
-const isDark = themeVal === "dark" || (themeVal === "auto" && systemPrefersDark);const e=xt.useRef(null),t=xt.useRef(null),r=xt.useRef(null),n=xt.useRef(null),i=xt.useRef(null),[o,a]=xt.useState(!1),[s,u]=xt.useState(!1),[l,f]=xt.useState(M3),[d,h]=xt.useState(!1),[c,g]=xt.useState(!1),v=Object.fromEntries([["Original Size",[0,0]],...Object.entries(z3).flatMap(([k,S])=>{const F=S,C=[...S].reverse();return[[`${k} Portrait`,F],[`${k} Landscape`,C]]})]);xt.useEffect(()=>{e.current!=null&&(typeof chrome>"u"||!chrome.tabs?(e.current.value="document",u(!0)):chrome.tabs.query({active:!0,currentWindow:!0},k=>{!k[0]||!k[0].id||chrome.tabs.sendMessage(k[0].id,{action:"findOriginalFileName"},S=>{if(chrome.runtime.lastError){console.warn("Could not communicate with content script. Active tab might not be Google Drive preview:",chrome.runtime.lastError.message);return}if(S){const{fileName:F,size:C}=S;F&&F!==""&&(C&&C.width>C.height&&f("A4 Landscape"),e.current&&(e.current.value=F),u(!0))}})}))},[]);function w(){return{scrollSpeed:Number(scrollSpeedVal)||300,startPage:Number(startPageVal)||0,endPage:Number(endPageVal)||0}}async function p(format){var F;a(!0);const k=((F=e.current)==null?void 0:F.value)||"document",S={...w(),format};typeof chrome>"u"||!chrome.tabs?(await I3(k,S),a(!1)):chrome.tabs.query({active:!0,currentWindow:!0},C=>{var A;if(!((A=C[0])!=null&&A.id)){a(!1);return}chrome.tabs.sendMessage(C[0].id,{action:"downloadImages",originalFileName:k,downloadOptions:S},()=>{a(!1)})})}async function m(format){var F;a(!0);const k=((F=e.current)==null?void 0:F.value)||"document",S={...w(),format};typeof chrome>"u"||!chrome.tabs?(await j3(k,S),a(!1)):chrome.tabs.query({active:!0,currentWindow:!0},C=>{var A;if(!((A=C[0])!=null&&A.id)){a(!1);return}chrome.tabs.sendMessage(C[0].id,{action:"downloadZip",originalFileName:k,downloadOptions:S},()=>{a(!1)})})}async function y(){var O,N;a(!0);const k=((O=i.current)==null?void 0:O.value)||l,[S,F]=v[k]||[0,0],C=((N=e.current)==null?void 0:N.value)||"document",A=w();typeof chrome>"u"||!chrome.tabs?(await B3(C,A,S,F),a(!1)):chrome.tabs.query({active:!0,currentWindow:!0},j=>{var P;if(!((P=j[0])!=null&&P.id)){a(!1);return}chrome.tabs.sendMessage(j[0].id,{action:"downloadPDF",originalFileName:C,downloadOptions:A,width:S,height:F},()=>{a(!1)})})}if(d)return ae.jsxs("div",{className:"flex flex-col font-sans",style:{padding:"16px",minHeight:"320px",backgroundColor:isDark?"#111827":"#f3f4f6",color:isDark?"#f9fafb":"#374151"},style:{padding:"16px",minHeight:"320px",backgroundColor:isDark?"#111827":"#f3f4f6",color:isDark?"#f9fafb":"#374151"},children:[ae.jsxs("div",{style:{display:"flex",flexDirection:"row",alignItems:"center",borderBottom:"1px solid #e5e7eb",paddingBottom:"10px",marginBottom:"16px"},children:[ae.jsx("button",{type:"button",onClick:()=>h(!1),style:{cursor:"pointer",background:"none",border:"none",padding:0,marginRight:"12px",display:"flex",alignItems:"center",justifyContent:"center"},children:ae.jsxs("svg",{style:{width:"20px",height:"20px",color:isDark?"#f3f4f6":"#374151"},viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round",children:[ae.jsx("path",{d:"M19 12H5"}),ae.jsx("path",{d:"m12 19-7-7 7-7"})]})}),ae.jsx("h2",{style:{fontSize:"16px",fontWeight:"700",color:isDark?"#f3f4f6":"#111827",margin:0},children:translations[langVal].settings})]}),ae.jsxs("div",{style:{display:"flex",flexDirection:"column",gap:"12px"},children:[ae.jsxs("div",{children:[ae.jsx("h3",{style:{fontSize:"13px",fontWeight:"600",color:isDark?"#f3f4f6":"#111827",margin:"0 0 4px 0"},children:translations[langVal].scrollSpeed}),ae.jsx("p",{style:{fontSize:"11px",color:isDark?"#9ca3af":"#6b7280",lineHeight:"1.4",margin:"0 0 8px 0"},children:translations[langVal].scrollDesc}),ae.jsx("input",{disabled:o,ref:t,className:"shadow text-sm border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline",id:"scrollspeed",style:{textAlign:"center",backgroundColor:"#ffffff",color:"#374151",borderColor:"#d1d5db"},type:"number",required:!0,value:scrollSpeedVal,onChange:(e)=>{const val=Number(e.target.value);setScrollSpeedVal(val);try{localStorage.setItem("gdrive_pdf_scrollspeed",val);}catch(err){}},min:100,max:1e4,placeholder:"millisecond"})]}),ae.jsxs("div",{children:[ae.jsx("h3",{style:{fontSize:"13px",fontWeight:"600",color:isDark?"#f3f4f6":"#111827",margin:"0 0 4px 0"},children:translations[langVal].pageRange}),ae.jsx("p",{style:{fontSize:"11px",color:isDark?"#9ca3af":"#6b7280",lineHeight:"1.4",margin:"0 0 8px 0"},children:translations[langVal].pageDesc}),ae.jsxs("div",{style:{display:"flex",flexDirection:"row",gap:"16px",marginTop:"8px"},children:[ae.jsxs("div",{style:{flex:1,display:"flex",flexDirection:"column",gap:"4px"},children:[ae.jsx("h4",{style:{fontSize:"12px",fontWeight:"600",color:isDark?"#d1d5db":"#374151",margin:0},children:translations[langVal].startPage}),ae.jsx("input",{disabled:o,ref:r,className:"shadow text-sm border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline",id:"startpage",style:{textAlign:"center",backgroundColor:"#ffffff",color:"#374151",borderColor:"#d1d5db"},type:"number",value:startPageVal,onChange:(e)=>{setStartPageVal(e.target.value)},min:1,placeholder:"page number"})]}),ae.jsxs("div",{style:{flex:1,display:"flex",flexDirection:"column",gap:"4px"},children:[ae.jsx("h4",{style:{fontSize:"12px",fontWeight:"600",color:isDark?"#d1d5db":"#374151",margin:0},children:translations[langVal].endPage}),ae.jsx("input",{disabled:o,ref:n,className:"shadow text-sm border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline",id:"endpage",style:{textAlign:"center",backgroundColor:"#ffffff",color:"#374151",borderColor:"#d1d5db"},type:"number",value:endPageVal,onChange:(e)=>{setEndPageVal(e.target.value)},min:1,placeholder:"page number"})]})]}),ae.jsxs("div",{style:{marginTop:"12px"},children:[ae.jsx("h3",{style:{fontSize:"13px",fontWeight:"600",color:isDark?"#f3f4f6":"#111827",margin:"0 0 4px 0"},children:translations[langVal].language}),ae.jsx("p",{style:{fontSize:"11px",color:isDark?"#9ca3af":"#6b7280",lineHeight:"1.4",margin:"0 0 8px 0"},children:translations[langVal].langDesc}),ae.jsxs("select",{value:langVal,onChange:(e)=>{const val=e.target.value;setLangVal(val);try{localStorage.setItem("gdrive_pdf_lang",val);}catch(err){}},className:"block shadow text-sm appearance-none border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline cursor-pointer",style:{textAlign:"center",textAlignLast:"center",backgroundColor:"#ffffff",color:"#374151",borderColor:"#d1d5db"},children:[ae.jsx("option",{value:"en",style:{backgroundColor:"#ffffff",color:"#374151"},children:"English"}),ae.jsx("option",{value:"ar",style:{backgroundColor:"#ffffff",color:"#374151"},children:"العربية"}),ae.jsx("option",{value:"fr",style:{backgroundColor:"#ffffff",color:"#374151"},children:"Français"}),ae.jsx("option",{value:"zh",style:{backgroundColor:"#ffffff",color:"#374151"},children:"中文"}),ae.jsx("option",{value:"ja",style:{backgroundColor:"#ffffff",color:"#374151"},children:"日本語"}),ae.jsx("option",{value:"es",style:{backgroundColor:"#ffffff",color:"#374151"},children:"Español"}),ae.jsx("option",{value:"de",style:{backgroundColor:"#ffffff",color:"#374151"},children:"Deutsch"})]})]}),ae.jsxs("div",{style:{marginTop:"12px"},children:[ae.jsx("h3",{style:{fontSize:"13px",fontWeight:"600",color:isDark?"#f3f4f6":"#111827",margin:"0 0 4px 0"},children:translations[langVal].theme}),ae.jsx("p",{style:{fontSize:"11px",color:isDark?"#9ca3af":"#6b7280",lineHeight:"1.4",margin:"0 0 8px 0"},children:translations[langVal].themeDesc}),ae.jsxs("select",{value:themeVal,onChange:(e)=>{const val=e.target.value;setThemeVal(val);try{localStorage.setItem("gdrive_pdf_theme",val);}catch(err){}},className:"block shadow text-sm appearance-none border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline cursor-pointer",style:{textAlign:"center",textAlignLast:"center",backgroundColor:"#ffffff",color:"#374151",borderColor:"#d1d5db"},children:[ae.jsx("option",{value:"auto",style:{backgroundColor:"#ffffff",color:"#374151"},children:translations[langVal].themeAuto}),ae.jsx("option",{value:"light",style:{backgroundColor:"#ffffff",color:"#374151"},children:translations[langVal].themeLight}),ae.jsx("option",{value:"dark",style:{backgroundColor:"#ffffff",color:"#374151"},children:translations[langVal].themeDark})]})]}),ae.jsx("div",{style:{display:"flex",justifyContent:langVal==="ar"?"flex-start":"flex-end",width:"100%",marginTop:"16px"},children:ae.jsx("button",{type:"button",onClick:()=>h(!1),className:"h-10 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded-full border border-blue-500 shadow-md transition-colors",style:{width:"90px"},children:translations[langVal].ok})})]})]})]});return ae.jsxs("div",{className:"flex flex-col font-sans",style:{padding:"16px",minHeight:"320px",backgroundColor:isDark?"#111827":"#f3f4f6",color:isDark?"#f9fafb":"#374151"},children:[ae.jsxs("div",{children:[ae.jsxs("div",{className:"flex flex-row items-center justify-between my-2",children:[ae.jsx("h2",{style:{fontSize:"13px",fontWeight:"600",color:isDark?"#f3f4f6":"#111827",margin:0},children:translations[langVal].filename}),ae.jsx("button",{disabled:o,type:"button",onClick:()=>h(!d),style:{cursor:"pointer",background:"none",border:"none",padding:0,display:"flex",alignItems:"center",justifyContent:"center"},children:ae.jsxs("svg",{style:{width:"20px",height:"20px",color:d?(isDark?"#60a5fa":"#3b82f6"):(isDark?"#9ca3af":"#6b7280"),transition:"color 0.2s"},viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round",children:[ae.jsx("path",{d:"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"}),ae.jsx("circle",{cx:"12",cy:"12",r:"3"})]})})]}),ae.jsx("input",{disabled:o,ref:e,className:"shadow text-sm appearance-none border rounded-full w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline",id:"filename",style:{textAlign:"center"},type:"text",placeholder:"filename"})]}),s?ae.jsxs("section",{children:[,ae.jsx("h2",{style:{fontSize:"13px",fontWeight:"600",color:isDark?"#f3f4f6":"#111827",margin:"8px 0 4px 0"},children:translations[langVal].download}),ae.jsx("p",{className:"my-2 text-xs",style:{color:isDark?"#9ca3af":"#4b5563"},children:translations[langVal].qualityWarning}),ae.jsxs("div",{className:`flex flex-row items-stretch mt-2 w-full h-12 rounded-full overflow-hidden border ${o?"bg-gray-700 border-transparent":"bg-blue-500 border-blue-500"}`,children:[ae.jsxs("button",{disabled:o,type:"button",onClick:()=>p("png"),className:"flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",children:[ae.jsx(R2,{size:16}),ae.jsx("span",{children:"PNG"})]}),ae.jsx("div",{style:{alignSelf:"center",width:"1px",height:"24px",backgroundColor:"rgba(255,255,255,0.4)",flexShrink:0}}),ae.jsxs("button",{disabled:o,type:"button",onClick:()=>p("jpg"),className:"flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",children:[ae.jsx(R2,{size:16}),ae.jsx("span",{children:"JPG"})]}),ae.jsx("div",{style:{alignSelf:"center",width:"1px",height:"24px",backgroundColor:"rgba(255,255,255,0.4)",flexShrink:0}}),ae.jsxs("button",{disabled:o,type:"button",onClick:()=>p("webp"),className:"flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",children:[ae.jsx(R2,{size:16}),ae.jsx("span",{children:"WebP"})]})]}),ae.jsxs("div",{className:`flex flex-row items-stretch mt-2 w-full h-12 rounded-full overflow-hidden border ${o?"bg-gray-700 border-transparent":"bg-blue-500 border-blue-500"}`,children:[ae.jsxs("button",{disabled:o,type:"button",onClick:()=>p("jpeg"),className:"flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",children:[ae.jsx(R2,{size:16}),ae.jsx("span",{children:"JPEG"})]}),ae.jsx("div",{style:{alignSelf:"center",width:"1px",height:"24px",backgroundColor:"rgba(255,255,255,0.4)",flexShrink:0}}),ae.jsxs("button",{disabled:o,type:"button",onClick:()=>p("avif"),className:"flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",children:[ae.jsx(R2,{size:16}),ae.jsx("span",{children:"AVIF"})]}),ae.jsx("div",{style:{alignSelf:"center",width:"1px",height:"24px",backgroundColor:"rgba(255,255,255,0.4)",flexShrink:0}}),ae.jsxs("button",{disabled:o,type:"button",onClick:()=>m("png"),className:"flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",children:[ae.jsx(z2,{size:16}),ae.jsx("span",{children:"Zip"})]})]}),ae.jsxs("div",{className:`flex flex-row items-stretch mt-2 w-full h-12 rounded-full overflow-hidden border ${o?"bg-gray-700 border-transparent":"bg-blue-500 border-blue-500"}`,children:[ae.jsxs("button",{disabled:o,type:"button",className:"flex flex-row items-center justify-center px-4 gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",style:{flex:2},onClick:y,children:[ae.jsx(O2,{size:16}),ae.jsx("p",{children:translations[langVal].pdfFile})]}),ae.jsx("div",{style:{alignSelf:"center",width:"1px",height:"24px",backgroundColor:"rgba(255,255,255,0.4)",flexShrink:0}}),ae.jsx("button",{disabled:o,type:"button",className:"flex items-center justify-center text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",style:{flex:1},onClick:()=>g(!c),children:ae.jsx("svg",{className:`h-4 w-4 shrink-0 transition-transform duration-200 ${c?"rotate-180":""}`,viewBox:"0 0 24 24",fill:"currentColor",style:{width:"14px",height:"14px"},children:ae.jsx("path",{d:"M7 10l5 5 5-5H7z"})})})]}),c&&ae.jsx("div",{className:"mt-2 pb-4 text-sm overflow-hidden animate-accordion-down",children:ae.jsx("select",{disabled:o,ref:i,className:"block shadow text-sm appearance-none border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline cursor-pointer",id:"pdfsize",defaultValue:l,style:{textAlign:"center",textAlignLast:"center",backgroundColor:"#ffffff",color:"#374151",borderColor:"#d1d5db"},children:Object.entries(v).map(([k,S])=>ae.jsxs("option",{value:k,children:[k," : ",S.join(" - ")]},k))})}),o&&ae.jsx("div",{className:"flex justify-center mt-4",children:ae.jsx("div",{className:"animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"})})]}):ae.jsx("div",{className:"my-4 text-sm",children:ae.jsxs("p",{className:"text-red-500",children:[translations[langVal].errorMsg[0],ae.jsx("br",{}),translations[langVal].errorMsg[1]]})}),ae.jsx("div",{style:{display:"flex",justifyContent:"center",marginTop:"12px",paddingBottom:"2px"},children:ae.jsx("a",{href:"https://github.com/hamzabellouch",target:"_blank",rel:"noopener noreferrer",style:{color:isDark?"#9ca3af":"#4b5563",textDecoration:"none",fontSize:"11px",fontWeight:"500",fontFamily:"sans-serif"},children:"Copyright © 2026"})})]})}Df.createRoot(document.getElementById("root")).render(ae.jsx(g1.StrictMode,{children:ae.jsx("div",{className:"tailwind",children:ae.jsx("main",{className:"w-72 bg-transparent text-inherit p-0 m-0",children:ae.jsx(U3,{})})})}));
+}, []);
+function w(){return{scrollSpeed:Number(scrollSpeedVal)||300,startPage:Number(startPageVal)||0,endPage:Number(endPageVal)||0}}
+async function p(format){
+  var F;
+  a(!0);
+  const k = fileNameVal || ((F = e.current) == null ? void 0 : F.value) || "document";
+  const S = {...w(), format};
+  if (typeof chrome > "u" || !chrome.tabs) {
+    await I3(k, S);
+    a(!1);
+  } else {
+    chrome.tabs.query({active: !0, currentWindow: !0}, C => {
+      var A;
+      if (!((A = C[0]) != null && A.id)) { a(!1); return; }
+      chrome.tabs.sendMessage(C[0].id, {action: "downloadImages", originalFileName: k, downloadOptions: S}, () => { a(!1); });
+    });
+  }
+}
+async function m(format){
+  var F;
+  a(!0);
+  const k = fileNameVal || ((F = e.current) == null ? void 0 : F.value) || "document";
+  const S = {...w(), format};
+  if (typeof chrome > "u" || !chrome.tabs) {
+    await j3(k, S);
+    a(!1);
+  } else {
+    chrome.tabs.query({active: !0, currentWindow: !0}, C => {
+      var A;
+      if (!((A = C[0]) != null && A.id)) { a(!1); return; }
+      chrome.tabs.sendMessage(C[0].id, {action: "downloadZip", originalFileName: k, downloadOptions: S}, () => { a(!1); });
+    });
+  }
+}
+async function y(){
+  var O, N;
+  a(!0);
+  const k = ((O = i.current) == null ? void 0 : O.value) || l;
+  const [S, F] = v[k] || [0, 0];
+  const C = fileNameVal || ((N = e.current) == null ? void 0 : N.value) || "document";
+  const A = w();
+  if (typeof chrome > "u" || !chrome.tabs) {
+    await B3(C, A, S, F);
+    a(!1);
+  } else {
+    chrome.tabs.query({active: !0, currentWindow: !0}, j => {
+      var P;
+      if (!((P = j[0]) != null && P.id)) { a(!1); return; }
+      chrome.tabs.sendMessage(j[0].id, {action: "downloadPDF", originalFileName: C, downloadOptions: A, width: S, height: F}, () => { a(!1); });
+    });
+  }
+}
+if (d) return ae.jsxs("div", {
+  className: "flex flex-col font-sans",
+  style: {
+    padding: "16px",
+    minHeight: "320px",
+    backgroundColor: isDark ? "#111827" : "#f3f4f6",
+    color: isDark ? "#f9fafb" : "#374151"
+  },
+  children: [
+    ae.jsxs("div", {
+      style: {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
+        paddingBottom: "10px",
+        marginBottom: "16px"
+      },
+      children: [
+        ae.jsxs("div", {
+          style: { display: "flex", flexDirection: "row", alignItems: "center" },
+          children: [
+            ae.jsx("button", {
+              type: "button",
+              onClick: () => h(!1),
+              style: {
+                cursor: "pointer",
+                background: "none",
+                border: "none",
+                padding: 0,
+                marginRight: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              },
+              children: ae.jsxs("svg", {
+                style: {
+                  width: "20px",
+                  height: "20px",
+                  color: isDark ? "#f3f4f6" : "#374151"
+                },
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                children: [
+                  ae.jsx("path", { d: "M19 12H5" }),
+                  ae.jsx("path", { d: "m12 19-7-7 7-7" })
+                ]
+              })
+            }),
+            ae.jsx("h2", {
+              style: {
+                fontSize: "16px",
+                fontWeight: "700",
+                color: isDark ? "#f3f4f6" : "#111827",
+                margin: 0
+              },
+              children: translations[langVal].settings
+            })
+          ]
+        }),
+        ae.jsx("button", {
+          disabled: o,
+          type: "button",
+          onClick: toggleTheme,
+          style: {
+            cursor: "pointer",
+            background: "none",
+            border: "none",
+            padding: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          },
+          title: isDark ? "Dark Mode" : "Light Mode",
+          children: isDark
+            ? ae.jsx("svg", {
+                style: {
+                  width: "20px",
+                  height: "20px",
+                  color: "#60a5fa",
+                  transition: "color 0.2s"
+                },
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                children: ae.jsx("path", { d: "M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" })
+              })
+            : ae.jsxs("svg", {
+                style: {
+                  width: "20px",
+                  height: "20px",
+                  color: "#eab308",
+                  transition: "color 0.2s"
+                },
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                children: [
+                  ae.jsx("circle", { cx: "12", cy: "12", r: "4" }),
+                  ae.jsx("path", { d: "M12 2v2" }),
+                  ae.jsx("path", { d: "M12 20v2" }),
+                  ae.jsx("path", { d: "m4.93 4.93 1.41 1.41" }),
+                  ae.jsx("path", { d: "m17.66 17.66 1.41 1.41" }),
+                  ae.jsx("path", { d: "M2 12h2" }),
+                  ae.jsx("path", { d: "M20 12h2" }),
+                  ae.jsx("path", { d: "m6.34 17.66-1.41 1.41" }),
+                  ae.jsx("path", { d: "m19.07 4.93-1.41 1.41" })
+                ]
+              })
+        })
+      ]
+    }),
+    ae.jsxs("div", {
+      style: { display: "flex", flexDirection: "column", gap: "12px" },
+      children: [
+        ae.jsxs("div", {
+          children: [
+            ae.jsx("h3", {
+              style: {
+                fontSize: "13px",
+                fontWeight: "600",
+                color: isDark ? "#f3f4f6" : "#111827",
+                margin: "0 0 4px 0"
+              },
+              children: translations[langVal].scrollSpeed
+            }),
+            ae.jsx("p", {
+              style: {
+                fontSize: "11px",
+                color: isDark ? "#9ca3af" : "#6b7280",
+                lineHeight: "1.4",
+                margin: "0 0 8px 0"
+              },
+              children: translations[langVal].scrollDesc
+            }),
+            ae.jsx("input", {
+              disabled: o,
+              ref: t,
+              className: "shadow text-sm border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline",
+              id: "scrollspeed",
+              style: {
+                textAlign: "center",
+                backgroundColor: "#ffffff",
+                color: "#374151",
+                borderColor: "#d1d5db"
+              },
+              type: "number",
+              required: !0,
+              value: scrollSpeedVal,
+              onChange: (e) => {
+                const val = Number(e.target.value);
+                setScrollSpeedVal(val);
+                try {
+                  localStorage.setItem("gdrive_pdf_scrollspeed", val);
+                } catch (err) {}
+              },
+              min: 100,
+              max: 1e4,
+              placeholder: "millisecond"
+            })
+          ]
+        }),
+        ae.jsxs("div", {
+          children: [
+            ae.jsx("h3", {
+              style: {
+                fontSize: "13px",
+                fontWeight: "600",
+                color: isDark ? "#f3f4f6" : "#111827",
+                margin: "0 0 4px 0"
+              },
+              children: translations[langVal].pageRange
+            }),
+            ae.jsx("p", {
+              style: {
+                fontSize: "11px",
+                color: isDark ? "#9ca3af" : "#6b7280",
+                lineHeight: "1.4",
+                margin: "0 0 8px 0"
+              },
+              children: translations[langVal].pageDesc
+            }),
+            ae.jsxs("div", {
+              style: {
+                display: "flex",
+                flexDirection: "row",
+                gap: "16px",
+                marginTop: "8px"
+              },
+              children: [
+                ae.jsxs("div", {
+                  style: {
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px"
+                  },
+                  children: [
+                    ae.jsx("h4", {
+                      style: {
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        color: isDark ? "#d1d5db" : "#374151",
+                        margin: 0
+                      },
+                      children: translations[langVal].startPage
+                    }),
+                    ae.jsx("input", {
+                      disabled: o,
+                      ref: r,
+                      className: "shadow text-sm border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline",
+                      id: "startpage",
+                      style: {
+                        textAlign: "center",
+                        backgroundColor: "#ffffff",
+                        color: "#374151",
+                        borderColor: "#d1d5db"
+                      },
+                      type: "number",
+                      value: startPageVal,
+                      onChange: (e) => {
+                        setStartPageVal(e.target.value);
+                      },
+                      min: 1,
+                      placeholder: "page number"
+                    })
+                  ]
+                }),
+                ae.jsxs("div", {
+                  style: {
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px"
+                  },
+                  children: [
+                    ae.jsx("h4", {
+                      style: {
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        color: isDark ? "#d1d5db" : "#374151",
+                        margin: 0
+                      },
+                      children: translations[langVal].endPage
+                    }),
+                    ae.jsx("input", {
+                      disabled: o,
+                      ref: n,
+                      className: "shadow text-sm border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline",
+                      id: "endpage",
+                      style: {
+                        textAlign: "center",
+                        backgroundColor: "#ffffff",
+                        color: "#374151",
+                        borderColor: "#d1d5db"
+                      },
+                      type: "number",
+                      value: endPageVal,
+                      onChange: (e) => {
+                        setEndPageVal(e.target.value);
+                      },
+                      min: 1,
+                      placeholder: "page number"
+                    })
+                  ]
+                })
+              ]
+            })
+          ]
+        }),
+        ae.jsxs("div", {
+          style: { marginTop: "12px" },
+          children: [
+            ae.jsx("h3", {
+              style: {
+                fontSize: "13px",
+                fontWeight: "600",
+                color: isDark ? "#f3f4f6" : "#111827",
+                margin: "0 0 4px 0"
+              },
+              children: translations[langVal].language
+            }),
+            ae.jsx("p", {
+              style: {
+                fontSize: "11px",
+                color: isDark ? "#9ca3af" : "#6b7280",
+                lineHeight: "1.4",
+                margin: "0 0 8px 0"
+              },
+              children: translations[langVal].langDesc
+            }),
+            ae.jsxs("select", {
+              value: langVal,
+              onChange: (e) => {
+                const val = e.target.value;
+                setLangVal(val);
+                try {
+                  localStorage.setItem("gdrive_pdf_lang", val);
+                } catch (err) {}
+              },
+              className: "block shadow text-sm appearance-none border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline cursor-pointer",
+              style: {
+                textAlign: "center",
+                textAlignLast: "center",
+                backgroundColor: "#ffffff",
+                color: "#374151",
+                borderColor: "#d1d5db"
+              },
+              children: [
+                ae.jsx("option", { value: "en", style: { backgroundColor: "#ffffff", color: "#374151" }, children: "English" }),
+                ae.jsx("option", { value: "ar", style: { backgroundColor: "#ffffff", color: "#374151" }, children: "العربية" }),
+                ae.jsx("option", { value: "fr", style: { backgroundColor: "#ffffff", color: "#374151" }, children: "Français" }),
+                ae.jsx("option", { value: "zh", style: { backgroundColor: "#ffffff", color: "#374151" }, children: "中文" }),
+                ae.jsx("option", { value: "ja", style: { backgroundColor: "#ffffff", color: "#374151" }, children: "日本語" }),
+                ae.jsx("option", { value: "es", style: { backgroundColor: "#ffffff", color: "#374151" }, children: "Español" }),
+                ae.jsx("option", { value: "de", style: { backgroundColor: "#ffffff", color: "#374151" }, children: "Deutsch" })
+              ]
+            })
+          ]
+        }),
+        ae.jsx("div", {
+          style: {
+            display: "flex",
+            justifyContent: langVal === "ar" ? "flex-start" : "flex-end",
+            width: "100%",
+            marginTop: "16px"
+          },
+          children: ae.jsx("button", {
+            type: "button",
+            onClick: () => h(!1),
+            className: "h-10 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 rounded-full border border-blue-500 shadow-md transition-colors",
+            style: { width: "90px" },
+            children: translations[langVal].ok
+          })
+        })
+      ]
+    })
+  ]
+});
+
+return ae.jsxs("div", {
+  className: "flex flex-col font-sans",
+  style: {
+    padding: "16px",
+    minHeight: "320px",
+    backgroundColor: isDark ? "#111827" : "#f3f4f6",
+    color: isDark ? "#f9fafb" : "#374151"
+  },
+  children: [
+    ae.jsx("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingBottom: "4px",
+        marginBottom: "4px"
+      },
+      children: ae.jsx("h1", {
+        style: {
+          fontSize: "13px",
+          fontWeight: "700",
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          color: isDark ? "#f9fafb" : "#111827",
+          textAlign: "center",
+          margin: 0
+        },
+        children: "CHOOSE PDF FORMAT"
+      })
+    }),
+    ae.jsxs("div", {
+      children: [
+        ae.jsxs("div", {
+          className: "flex flex-row items-center justify-between my-2",
+          children: [
+            ae.jsx("h2", {
+              style: {
+                fontSize: "13px",
+                fontWeight: "600",
+                color: isDark ? "#f3f4f6" : "#111827",
+                margin: 0
+              },
+              children: translations[langVal].filename
+            }),
+            ae.jsx("button", {
+              disabled: o,
+              type: "button",
+              onClick: () => h(!d),
+              style: {
+                cursor: "pointer",
+                background: "none",
+                border: "none",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              },
+              children: ae.jsxs("svg", {
+                style: {
+                  width: "20px",
+                  height: "20px",
+                  color: d ? (isDark ? "#60a5fa" : "#3b82f6") : (isDark ? "#9ca3af" : "#6b7280"),
+                  transition: "color 0.2s"
+                },
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                children: [
+                  ae.jsx("path", { d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" }),
+                  ae.jsx("circle", { cx: "12", cy: "12", r: "3" })
+                ]
+              })
+            })
+          ]
+        }),
+        ae.jsx("input", {
+          disabled: o,
+          ref: e,
+          value: fileNameVal,
+          onChange: (ev) => {
+            setFileNameVal(ev.target.value);
+          },
+          className: "shadow text-sm appearance-none border rounded-full w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline",
+          id: "filename",
+          style: { textAlign: "center" },
+          type: "text",
+          placeholder: "filename"
+        })
+      ]
+    }),
+    s ? ae.jsxs("section", {
+      children: [
+        ae.jsx("h2", {
+          style: {
+            fontSize: "13px",
+            fontWeight: "600",
+            color: isDark ? "#f3f4f6" : "#111827",
+            margin: "8px 0 4px 0"
+          },
+          children: translations[langVal].download
+        }),
+        ae.jsx("p", {
+          className: "my-2 text-xs",
+          style: { color: isDark ? "#9ca3af" : "#4b5563" },
+          children: translations[langVal].qualityWarning
+        }),
+        ae.jsxs("div", {
+          className: `flex flex-row items-stretch mt-2 w-full h-12 rounded-full overflow-hidden border ${o ? "bg-gray-700 border-transparent" : "bg-blue-500 border-blue-500"}`,
+          children: [
+            ae.jsxs("button", {
+              disabled: o,
+              type: "button",
+              onClick: () => p("png"),
+              className: "flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              children: [ae.jsx(R2, { size: 16 }), ae.jsx("span", { children: "PNG" })]
+            }),
+            ae.jsx("div", {
+              style: {
+                alignSelf: "center",
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(255,255,255,0.4)",
+                flexShrink: 0
+              }
+            }),
+            ae.jsxs("button", {
+              disabled: o,
+              type: "button",
+              onClick: () => p("jpg"),
+              className: "flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              children: [ae.jsx(R2, { size: 16 }), ae.jsx("span", { children: "JPG" })]
+            }),
+            ae.jsx("div", {
+              style: {
+                alignSelf: "center",
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(255,255,255,0.4)",
+                flexShrink: 0
+              }
+            }),
+            ae.jsxs("button", {
+              disabled: o,
+              type: "button",
+              onClick: () => p("webp"),
+              className: "flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              children: [ae.jsx(R2, { size: 16 }), ae.jsx("span", { children: "WebP" })]
+            })
+          ]
+        }),
+        ae.jsxs("div", {
+          className: `flex flex-row items-stretch mt-2 w-full h-12 rounded-full overflow-hidden border ${o ? "bg-gray-700 border-transparent" : "bg-blue-500 border-blue-500"}`,
+          children: [
+            ae.jsxs("button", {
+              disabled: o,
+              type: "button",
+              onClick: () => p("jpeg"),
+              className: "flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              children: [ae.jsx(R2, { size: 16 }), ae.jsx("span", { children: "JPEG" })]
+            }),
+            ae.jsx("div", {
+              style: {
+                alignSelf: "center",
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(255,255,255,0.4)",
+                flexShrink: 0
+              }
+            }),
+            ae.jsxs("button", {
+              disabled: o,
+              type: "button",
+              onClick: () => p("avif"),
+              className: "flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              children: [ae.jsx(R2, { size: 16 }), ae.jsx("span", { children: "AVIF" })]
+            }),
+            ae.jsx("div", {
+              style: {
+                alignSelf: "center",
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(255,255,255,0.4)",
+                flexShrink: 0
+              }
+            }),
+            ae.jsxs("button", {
+              disabled: o,
+              type: "button",
+              onClick: () => m("png"),
+              className: "flex-1 flex flex-row items-center justify-center gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              children: [ae.jsx(z2, { size: 16 }), ae.jsx("span", { children: "Zip" })]
+            })
+          ]
+        }),
+        ae.jsxs("div", {
+          className: `flex flex-row items-stretch mt-2 w-full h-12 rounded-full overflow-hidden border ${o ? "bg-gray-700 border-transparent" : "bg-blue-500 border-blue-500"}`,
+          children: [
+            ae.jsxs("button", {
+              disabled: o,
+              type: "button",
+              className: "flex flex-row items-center justify-center px-4 gap-1.5 text-sm font-normal text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              style: { flex: 2 },
+              onClick: y,
+              children: [ae.jsx(O2, { size: 16 }), ae.jsx("p", { children: translations[langVal].pdfFile })]
+            }),
+            ae.jsx("div", {
+              style: {
+                alignSelf: "center",
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(255,255,255,0.4)",
+                flexShrink: 0
+              }
+            }),
+            ae.jsx("button", {
+              disabled: o,
+              type: "button",
+              className: "flex items-center justify-center text-white bg-transparent hover:bg-blue-600 disabled:pointer-events-none transition-colors focus:outline-none",
+              style: { flex: 1 },
+              onClick: () => g(!c),
+              children: ae.jsx("svg", {
+                className: `h-4 w-4 shrink-0 transition-transform duration-200 ${c ? "rotate-180" : ""}`,
+                viewBox: "0 0 24 24",
+                fill: "currentColor",
+                style: { width: "14px", height: "14px" },
+                children: ae.jsx("path", { d: "M7 10l5 5 5-5H7z" })
+              })
+            })
+          ]
+        }),
+        c && ae.jsx("div", {
+          className: "mt-2 pb-4 text-sm overflow-hidden animate-accordion-down",
+          children: ae.jsx("select", {
+            disabled: o,
+            ref: i,
+            className: "block shadow text-sm appearance-none border rounded-full w-full py-2 px-4 leading-tight focus:outline-none focus:shadow-outline cursor-pointer",
+            id: "pdfsize",
+            defaultValue: l,
+            style: {
+              textAlign: "center",
+              textAlignLast: "center",
+              backgroundColor: "#ffffff",
+              color: "#374151",
+              borderColor: "#d1d5db"
+            },
+            children: Object.entries(v).map(([k, S]) => ae.jsxs("option", { value: k, children: [k, " : ", S.join(" - ")] }, k))
+          })
+        }),
+        o && ae.jsx("div", {
+          className: "flex justify-center mt-4",
+          children: ae.jsx("div", { className: "animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent" })
+        })
+      ]
+    }) : ae.jsx("div", {
+      className: "my-4 text-sm",
+      children: ae.jsxs("p", {
+        className: "text-red-500",
+        children: [
+          translations[langVal].errorMsg[0],
+          ae.jsx("br", {}),
+          translations[langVal].errorMsg[1]
+        ]
+      })
+    }),
+    ae.jsx("div", {
+      style: { display: "flex", justifyContent: "center", marginTop: "12px", paddingBottom: "2px" },
+      children: ae.jsx("a", {
+        href: "https://github.com/hamzabellouch",
+        target: "_blank",
+        rel: "noopener noreferrer",
+        style: {
+          color: isDark ? "#9ca3af" : "#4b5563",
+          textDecoration: "none",
+          fontSize: "11px",
+          fontWeight: "500",
+          fontFamily: "sans-serif"
+        },
+        children: "Copyright © 2026"
+      })
+    })
+  ]
+});
+}
+Df.createRoot(document.getElementById("root")).render(ae.jsx(g1.StrictMode,{children:ae.jsx("div",{className:"tailwind",children:ae.jsx("main",{className:"w-72 bg-transparent text-inherit p-0 m-0",children:ae.jsx(U3,{})})})}));

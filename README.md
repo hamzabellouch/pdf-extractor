@@ -1,6 +1,6 @@
 # PDF Extractor
 
-A modern, lightweight, and powerful browser extension to extract and export document previews from Google Drive into various formats including PDF, images (PNG, JPG, WebP, AVIF), or compressed ZIP files.
+A modern, lightweight, and powerful browser extension to extract and export document previews from **Google Drive** and **direct PDF URLs across the web** into various formats including PDF, images (PNG, JPG, WebP, AVIF, JPEG), or compressed ZIP files.
 
 <div align="center">
   <img src="https://github.com/hamzabellouch/pdf-extractor/blob/main/PDF%20Extractor.jpeg" width="800"/>
@@ -12,10 +12,13 @@ Compatible with all major browsers: **Chrome, Brave, Edge, Opera (Chromium-based
 
 ### <a name="Features"></a> ⭐ Features
 
+- **Dual Mode Support:** 
+  - **Google Drive Previews:** Extract protected or view-only document previews directly from Google Drive.
+  - **Direct PDF URLs:** Extract, convert, or slice pages from any direct PDF file across the web (e.g. `static.googleusercontent.com`, online PDFs, and embedded documents).
 - **Multi-Format Support:** Export document previews as **PDF**, **PNG**, **JPG**, **WebP**, **JPEG**, **AVIF**, or **ZIP**.
 - **Page Range Settings:** Select specific pages to extract (e.g., start page to end page).
 - **Custom Filenames:** Easily customize the name of the exported files.
-- **Scroll Speed Control:** Customize the automatic scroll speed for capturing preview documents.
+- **Scroll Speed Control:** Customize the automatic scroll speed for capturing Google Drive preview documents.
 - **Theme Adaptation:** Automatically matches your system/browser theme (Dark Mode & Light Mode).
 - **Clean UI:** Premium, modern, and user-friendly interface.
 
@@ -26,12 +29,12 @@ Compatible with all major browsers: **Chrome, Brave, Edge, Opera (Chromium-based
 ```text
 
 ├── chromium/          # Extension build directory for Chrome, Brave, Edge, etc.
-│   ├── assets/        # Content scripts, popup styles, and popup scripts
+│   ├── assets/        # Content scripts, PDF.js assets, popup styles, and popup scripts
 │   ├── manifest.json  # Chromium Manifest V3 configuration
 │   └── index.html     # Popup entry point
 │
 ├── firefox/           # Extension build directory for Mozilla Firefox
-│   ├── assets/        # Content scripts, popup styles, and popup scripts
+│   ├── assets/        # Content scripts, PDF.js assets, popup styles, and popup scripts
 │   ├── manifest.json  # Firefox Manifest V3 configuration (with Gecko ID)
 │   └── index.html     # Popup entry point
 │
@@ -81,8 +84,8 @@ firefox/
 
 ### <a name="Privacy & Safety"></a> 🛡️ Privacy & Safety
 
-- **Local Processing:** All conversions and extractions are performed locally in your browser. No data is sent to external servers or databases.
-- **No Permissions Sprawl:** The extension only runs on Google Drive file previews (`https://drive.google.com/file/d/*/view*`, `https://drive.google.com/drive/*`).
+- **Local Processing:** All conversions, page rendering, and extractions are performed locally in your browser. No data is sent to external servers or databases.
+- **Safe & Efficient:** Uses high-performance local Web Workers for client-side PDF rasterization and vector manipulation.
 
 
 
